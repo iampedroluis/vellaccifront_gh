@@ -1,0 +1,3 @@
+[ TAREAS ]
+
+el backend del proyecto sigue siendo woocommerce? porque ese es quien tiene toda la data, y unicamente el frontend la parte visual la voy a crear yo por aqui para que se vea, por otro lado aqui esta el repo en github https://github.com/iampedroluis/vellaccifront_gh haz todo lo que tengas que hacer para desplegarlo, y al final dime como lo puedo hacer las proximas veces que quiera modificar algo del front, si necesitas cosas dime que te las paso. 

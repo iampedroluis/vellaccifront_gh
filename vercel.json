@@ -1,0 +1,103 @@
+{
+    "buildCommand": "vite build",
+    "outputDirectory": "dist",
+    "framework": "vite",
+    "rewrites": [
+        {
+            "source": "/api/productos/:id",
+            "destination": "/api/productos/[id]"
+        },
+        {
+            "source": "/api/productos",
+            "destination": "/api/productos/index"
+        },
+        {
+            "source": "/api/categorias",
+            "destination": "/api/categorias/index"
+        },
+        {
+            "source": "/api/ordenes",
+            "destination": "/api/ordenes/index"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ],
+    "headers": [
+        {
+            "source": "/api/(.*)",
+            "headers": [
+                {
+                    "key": "Access-Control-Allow-Origin",
+                    "value": "*"
+                },
+                {
+                    "key": "Access-Control-Allow-Methods",
+                    "value": "GET, POST, OPTIONS"
+                },
+                {
+                    "key": "Access-Control-Allow-Headers",
+                    "value": "Content-Type"
+                },
+                {
+                    "key": "Access-Control-Expose-Headers",
+                    "value": "X-WP-TotalPages, X-WP-Total"
+                }
+            ]
+        },tination": "/api/productos/index"
+    },
+    {
+        "source": "/api/categorias",
+        "destination": "/api/categorias/index"
+    },
+    {
+        "source": "/api/ordenes",
+        "destination": "/api/ordenes/index"
+    },
+    {
+        "source": "/(.*)",
+        "destination": "/index.html"
+    }
+],
+"headers": [
+    {
+        "source": "/api/(.*)",
+        "headers": [
+            {
+                "key": "Access-Control-Allow-Origin",
+                "value": "*"
+            },
+            {
+                "key": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+            },
+            {
+                "key": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+            },
+            {
+                "key": "Access-Control-Expose-Headers",
+                "value": "X-WP-TotalPages, X-WP-Total"
+            }
+        ]
+    },
+    {
+        "source": "/(.*)",
+        "headers": [
+            {
+                "key": "X-Content-Type-Options",
+                "value": "nosniff"
+            },
+            {
+                "key": "X-Frame-Options",
+                "value": "DENY"
+            },
+            {
+                "key": "X-XSS-Protection",
+                "value": "1; mode=block"
+            }
+        ]
+    }
+]
+}

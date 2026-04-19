@@ -1,0 +1,88 @@
+.tarjeta-producto {
+  background: var(--color-blanco);
+  border-radius: var(--radio-borde);
+  overflow: hidden;
+  box-shadow: var(--sombra-suave);
+  transition: transform var(--transicion), box-shadow var(--transicion);
+  display: flex;
+  flex-direction: column;
+}
+
+.tarjeta-producto:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sombra-media);
+}
+
+.tarjeta-imagen-contenedor {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.tarjeta-imagen {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transicion);
+}
+
+.tarjeta-producto:hover .tarjeta-imagen {
+  transform: scale(1.05);
+}
+
+.etiqueta-descuento {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background-color: var(--color-acento);
+  color: var(--color-blanco);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.tarjeta-info {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.tarjeta-nombre {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-texto);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tarjeta-precios {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.precio-actual {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-primario);
+}
+
+.precio-tachado {
+  font-size: 0.9rem;
+  color: var(--color-texto-claro);
+  text-decoration: line-through;
+}
+
+.boton-agregar {
+  margin-top: auto;
+  width: 100%;
+  font-size: 0.85rem;
+  padding: 0.6rem;
+}
