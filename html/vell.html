@@ -1,0 +1,314 @@
+<!-- Pega todo esto en un widget HTML de Elementor o en tu plantilla -->
+<style>
+  /* Grid responsive */
+  .products-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:16px;
+    padding:20px;
+  }
+  @media (max-width: 900px){ .products-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px){ .products-grid{ grid-template-columns: 1fr; } }
+
+  .product-card{
+    border:1px solid #eee;
+    border-radius:10px;
+    overflow:hidden;
+    background:#fff;
+    display:flex;
+    flex-direction:column;
+    transition: transform .12s ease, box-shadow .12s ease;
+    /* Animacion de entrada por scroll: empieza invisible y desplazado abajo */
+    opacity:0;
+    transform: translateY(40px);
+  }
+  .product-card.visible{
+    opacity:1;
+    transform: translateY(0);
+    transition: opacity .5s ease, transform .5s ease, box-shadow .12s ease;
+  }
+  .product-card.visible:hover{
+    transform: translateY(-4px);
+    box-shadow: 0 8px 22px rgba(11,22,38,0.06);
+  }
+
+  /* Animacion de paginacion: fade out hacia un lado, fade in desde el otro */
+  .products-grid.salida-izquierda .product-card{
+    opacity:0;
+    transform: translateX(-30px);
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  .products-grid.salida-derecha .product-card{
+    opacity:0;
+    transform: translateX(30px);
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  .products-grid.entrada-izquierda .product-card{
+    opacity:0;
+    transform: translateX(-30px);
+  }
+  .products-grid.entrada-derecha .product-card{
+    opacity:0;
+    transform: translateX(30px);
+  }
+
+  .thumb-wrap{
+    position:relative;
+    overflow:hidden;
+    height:180px;
+    background:#f6f6f6;
+  }
+  .thumb-wrap img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    transition: transform .35s cubic-bezier(.2,.8,.2,1), filter .25s;
+  }
+  /* Hover zoom on image */
+  .thumb-wrap:hover img{
+    transform: scale(1.06);
+    filter:brightness(.98);
+  }
+
+  .product-body{
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    min-height:92px;
+  }
+  .product-title{
+    margin:0 0 8px;
+    font-size:15px;
+    line-height:1.35;
+  }
+  .product-price{
+    margin-top:auto;
+    font-weight:700;
+    color:#1a7f37;
+    font-size:15px;
+  }
+
+  /* Pagination */
+  .products-pagination{
+    display:flex;
+    gap:8px;
+    justify-content:center;
+    align-items:center;
+    padding:16px 8px 36px;
+    flex-wrap:wrap;
+  }
+  .page-btn{
+    background:#fff;
+    border:1px solid #ddd;
+    color:#222;
+    padding:6px 10px;
+    border-radius:6px;
+    cursor:pointer;
+    min-width:40px;
+    text-align:center;
+  }
+  .page-btn[disabled]{
+    opacity:.4;
+    cursor:default;
+  }
+  .page-btn.active{
+    background:#1a7f37;
+    color:#fff;
+    border-color:#1a7f37;
+  }
+  .page-info{
+    width:100%;
+    text-align:center;
+    color:#666;
+    font-size:13px;
+    margin-top:6px;
+  }
+</style>
+
+<div id="products-wrapper">
+  <section id="products-grid" class="products-grid">Cargando productos…</section>
+  <nav id="products-pagination" class="products-pagination" aria-label="Paginación de productos"></nav>
+  <div id="products-page-info" class="page-info" aria-live="polite"></div>
+</div>
+
+<script>
+(function(){
+  const container = document.getElementById('products-grid');
+  const pagination = document.getElementById('products-pagination');
+  const pageInfo = document.getElementById('products-page-info');
+  if(!container || !pagination || !pageInfo) return;
+
+  // Ajusta aquí si tu endpoint es otro
+  // Intentamos usar la Store API; pedimos per_page=100 para traer más productos (ajusta si tienes >100 productos)
+  const apiUrl = window.location.origin + '/wp-json/wc/store/products?per_page=100';
+
+  const pageSize = 3; // mostrar 3 productos por página
+  let products = [];
+  let currentPage = 1;
+  let totalPages = 1;
+
+  fetch(apiUrl, { credentials: 'include' })
+    .then(res => {
+      if(!res.ok) throw new Error('API no disponible: ' + res.status);
+      return res.json();
+    })
+    .then(data => {
+      // data se espera como array de productos
+      if(!Array.isArray(data) || data.length === 0){
+        container.innerHTML = '<p>No se encontraron productos.</p>';
+        pagination.innerHTML = '';
+        pageInfo.textContent = '';
+        return;
+      }
+      products = data;
+      totalPages = Math.max(1, Math.ceil(products.length / pageSize));
+      renderPage(currentPage);
+      renderPagination();
+    })
+    .catch(err => {
+      console.error(err);
+      container.innerHTML = `<p>Error al cargar productos: ${escapeHtml(err.message)}</p>`;
+      pagination.innerHTML = '';
+      pageInfo.textContent = '';
+    });
+
+  // Direccion de la animacion: 'ninguna' al inicio, 'izquierda' o 'derecha' al paginar
+  let direccionAnimacion = 'ninguna';
+
+  function renderPage(page){
+    const paginaAnterior = currentPage;
+    currentPage = Math.min(Math.max(1, page), totalPages);
+    const start = (currentPage - 1) * pageSize;
+    const slice = products.slice(start, start + pageSize);
+
+    if(direccionAnimacion !== 'ninguna'){
+      // Determinar direccion: si avanza pagina, sale hacia izquierda; si retrocede, sale hacia derecha
+      const claseSalida = (currentPage > paginaAnterior) ? 'salida-izquierda' : 'salida-derecha';
+      const claseEntrada = (currentPage > paginaAnterior) ? 'entrada-derecha' : 'entrada-izquierda';
+
+      // Paso 1: animacion de salida
+      container.classList.add(claseSalida);
+
+      setTimeout(() => {
+        // Paso 2: poner el nuevo contenido con clase de entrada
+        container.classList.remove(claseSalida);
+        container.innerHTML = slice.map(p => productCardHtml(p)).join('');
+        container.classList.add(claseEntrada);
+
+        // Paso 3: forzar reflow y quitar la clase para que entren visibles
+        void container.offsetHeight;
+        container.classList.remove(claseEntrada);
+
+        // Marcar cards como visibles para la animacion de entrada
+        const cards = container.querySelectorAll('.product-card');
+        cards.forEach((card, i) => {
+          setTimeout(() => card.classList.add('visible'), i * 80);
+        });
+
+        pageInfo.textContent = `Mostrando ${start + 1} - ${Math.min(start + slice.length, products.length)} de ${products.length} productos — pagina ${currentPage} de ${totalPages}`;
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        updateActiveButtons();
+      }, 250);
+    } else {
+      // Primera carga: sin animacion de paginacion, solo scroll
+      container.innerHTML = slice.map(p => productCardHtml(p)).join('');
+      pageInfo.textContent = `Mostrando ${start + 1} - ${Math.min(start + slice.length, products.length)} de ${products.length} productos — pagina ${currentPage} de ${totalPages}`;
+      // Activar observer para animacion de scroll
+      observarProductos();
+      updateActiveButtons();
+    }
+
+    // A partir de aqui las siguientes navegaciones tendran animacion
+    direccionAnimacion = 'activa';
+  }
+
+  // Observador de scroll: cuando los productos entran al viewport, aparecen de abajo hacia arriba
+  function observarProductos(){
+    const cards = container.querySelectorAll('.product-card');
+    if('IntersectionObserver' in window){
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+          if(entry.isIntersecting){
+            // Retraso escalonado para que aparezcan uno por uno
+            setTimeout(() => entry.target.classList.add('visible'), i * 100);
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      cards.forEach(card => observer.observe(card));
+    } else {
+      // Fallback si el navegador no soporta IntersectionObserver
+      cards.forEach(card => card.classList.add('visible'));
+    }
+  }
+
+  function renderPagination(){
+    pagination.innerHTML = '';
+    // Prev
+    const prev = createBtn('‹', () => renderPage(currentPage - 1));
+    prev.disabled = currentPage === 1;
+    pagination.appendChild(prev);
+
+    // Números (si hay muchas páginas pueden implementarse "..." — aquí mostramos todas)
+    for(let i=1;i<=totalPages;i++){
+      const btn = createBtn(i, () => renderPage(i));
+      if(i === currentPage) btn.classList.add('active');
+      pagination.appendChild(btn);
+    }
+
+    // Next
+    const next = createBtn('›', () => renderPage(currentPage + 1));
+    next.disabled = currentPage === totalPages;
+    pagination.appendChild(next);
+  }
+
+  function updateActiveButtons(){
+    // Re-render pagina para mantener estado correcto
+    // Encontrar botones numericos y activarlos
+    const btns = pagination.querySelectorAll('.page-btn');
+    btns.forEach(b => {
+      const txt = b.textContent.trim();
+      b.classList.remove('active');
+      if(parseInt(txt,10) === currentPage) b.classList.add('active');
+      b.disabled = (txt === '‹' && currentPage === 1) || (txt === '›' && currentPage === totalPages);
+    });
+  }
+
+  function createBtn(label, onClick){
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'page-btn';
+    b.textContent = label;
+    b.addEventListener('click', () => {
+      if(b.disabled) return;
+      onClick();
+    });
+    return b;
+  }
+
+  function productCardHtml(p){
+    const img = (p.images && p.images[0] && p.images[0].src) ? p.images[0].src : '';
+    const price = p.price_html || (p.price ? '$' + p.price : '—');
+    const name = escapeHtml(p.name || 'Producto');
+    const alt = escapeHtml(p.name || 'Imagen del producto');
+    // Puedes añadir enlace al producto: p.permalink (si existe) o p.id como data-id
+    const link = p.permalink || '#';
+    return `
+      <article class="product-card" data-id="${p.id}">
+        <a href="${escapeAttr(link)}" class="thumb-wrap" aria-label="${name}">
+          ${img ? `<img src="${escapeAttr(img)}" alt="${alt}">` : ''}
+        </a>
+        <div class="product-body">
+          <h3 class="product-title"><a href="${escapeAttr(link)}">${name}</a></h3>
+          <div class="product-price">${price}</div>
+        </div>
+      </article>
+    `;
+  }
+
+  function escapeHtml(s=''){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
+  function escapeAttr(s=''){ return escapeHtml(s).replace(/"/g, '&quot;'); }
+
+})();
+</script>
